@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: inference
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/amekala2514/platform-lab-gitops.git
+    targetRevision: main
+    path: workloads/inference
+    directory:
+      recurse: false
+  destination:
+    server: https://kubernetes.default.svc
+    # Each manifest sets its own metadata.namespace, so the app's destination
+    # namespace is just a default for resources that don't specify one.
+    namespace: inference
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true
+      - ServerSideApply=true

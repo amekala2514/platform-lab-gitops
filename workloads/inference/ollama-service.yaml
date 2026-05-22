@@ -1,0 +1,24 @@
+# ExternalName Service: makes the host's Ollama reachable inside the cluster
+# as ollama.inference.svc.cluster.local
+#
+# How it works:
+#   - kube-dns returns a CNAME pointing to externalName
+#   - host.docker.internal is special in Docker Desktop/Kind, resolves to host IP
+#   - Pods then connect directly to host's Ollama at port 11434
+#
+# This is preferred over a hardcoded ClusterIP because the host IP can change.
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama
+  namespace: inference
+  labels:
+    app: ollama
+    component: inference-backend
+spec:
+  type: ExternalName
+  externalName: host.docker.internal
+  ports:
+    - name: http
+      port: 11434
+      protocol: TCP
