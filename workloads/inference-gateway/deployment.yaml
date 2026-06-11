@@ -17,6 +17,13 @@ spec:
         app.kubernetes.io/name: inference-gateway
         app.kubernetes.io/part-of: platform-lab
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: gateway
           image: inference-gateway:831b762
@@ -59,6 +66,7 @@ spec:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             runAsNonRoot: true
+            runAsUser: 65532
             capabilities:
               drop:
                 - ALL
