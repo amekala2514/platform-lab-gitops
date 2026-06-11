@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hive-metastore
+  namespace: data-storage
+  labels:
+    app.kubernetes.io/name: hive-metastore
+    app.kubernetes.io/component: metastore
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: hive-metastore
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: hive-metastore
+        app.kubernetes.io/component: metastore
+    spec:
+      initContainers:
+        - name: wait-postgres
+          image: postgres:16-alpine
+          command:
+            - /bin/sh
+            - -c
+            - |
+              until pg_isready -h hive-postgres -p 5432 -U hive; do
+                echo "Waiting for hive-postgres..."; sleep 3
+              done
+              echo "Postgres ready."
+      containers:
+        - name: hive-metastore
+          image: apache/hive:4.0.0
+          env:
+            - name: SERVICE_NAME
+              value: metastore
+            - name: DB_DRIVER
+              value: postgres
+            - name: SERVICE_OPTS
+              value: >-
+                -Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver
+                -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://hive-postgres:5432/metastore
+                -Djavax.jdo.option.ConnectionUserName=hive
+                -Djavax.jdo.option.ConnectionPassword=hivepass
+            - name: IS_RESUME
+              value: "true"
+          ports:
+            - name: thrift
+              containerPort: 9083
+          resources:
+            requests:
+              memory: 512Mi
+              cpu: 100m
+            limits:
+              memory: 1Gi
+              cpu: 500m
+          readinessProbe:
+            tcpSocket:
+              port: thrift
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: thrift
+            initialDelaySeconds: 60
+            periodSeconds: 20
+          volumeMounts:
+            - name: config
+              mountPath: /opt/hive/conf/metastore-site.xml
+              subPath: metastore-site.xml
+      volumes:
+        - name: config
+          configMap:
+            name: hive-metastore-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hive-metastore
+  namespace: data-storage
+  labels:
+    app.kubernetes.io/name: hive-metastore
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: hive-metastore
+  ports:
+    - name: thrift
+      port: 9083
+      targetPort: thrift
