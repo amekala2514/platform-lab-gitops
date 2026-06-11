@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: data-storage
+  labels:
+    platform-lab.io/tier: data-platform
+    platform-lab.io/component: storage
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: data-query
+  labels:
+    platform-lab.io/tier: data-platform
+    platform-lab.io/component: query
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: data-streaming
+  labels:
+    platform-lab.io/tier: data-platform
+    platform-lab.io/component: streaming
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: data-jobs
+  labels:
+    platform-lab.io/tier: data-platform
+    platform-lab.io/component: jobs
