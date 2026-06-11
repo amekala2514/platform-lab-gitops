@@ -1,0 +1,21 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: inference-gateway
+  namespace: inference
+  labels:
+    app.kubernetes.io/name: inference-gateway
+    app.kubernetes.io/part-of: platform-lab
+    release: kps
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: inference-gateway
+  namespaceSelector:
+    matchNames:
+      - inference
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+      scrapeTimeout: 10s
