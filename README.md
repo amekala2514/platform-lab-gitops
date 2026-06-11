@@ -1,49 +1,45 @@
 # platform-lab-gitops
 
-GitOps source-of-truth for the [platform-lab](https://github.com/amekala2514/platform-lab) homelab cluster.
-
-Watched by Argo CD running in-cluster. Any change merged to `main` is automatically reconciled into the cluster within ~3 minutes (or instantly if a webhook is configured).
+Argo CD-managed manifests for [platform-lab](https://github.com/amekala2514/platform-lab).
 
 ## Layout
 
 ```
 .
-├── apps/                     # Argo CD Application CRs (the "app of apps")
-│   └── platform-api.yaml     # one Application per workload
-├── bootstrap/                # Root Application that points Argo CD at apps/
-│   └── root-app.yaml
-└── workloads/                # Actual K8s manifests Argo CD applies
-    └── platform-api/
-        ├── deployment.yaml
-        ├── service.yaml
-        ├── ingress.yaml
-        └── servicemonitor.yaml
+├── apps/                          # Argo Applications (app-of-apps)
+│   ├── inference.yaml             # ExternalName Service → host Ollama
+│   ├── inference-gateway.yaml     # Go gateway (v0.2.0)
+│   ├── open-webui.yaml            # chat UI
+│   ├── grafana-dashboards.yaml    # LLM Inference dashboard
+│   ├── observability-ingress.yaml # Grafana ingress
+│   ├── platform-api.yaml          # reference workload
+│   └── platform-api-monitoring.yaml
+└── workloads/
+    ├── inference-gateway/         # Deployment + Service + Ingress + ServiceMonitor
+    ├── open-webui/                # PVC + Deployment + Service + Ingress
+    ├── grafana-dashboards/        # ConfigMaps with grafana_dashboard=1 label
+    ├── observability-ingress/     # Grafana Ingress
+    └── platform-api/              # reference workload manifests
 ```
 
-## How it works
+## How sync works
 
-1. Argo CD is bootstrapped by Terraform in [`platform-lab`](https://github.com/amekala2514/platform-lab/tree/main/terraform).
-2. Terraform also creates a single root `Application` CR pointing at this repo's `apps/` directory.
-3. The root app discovers and creates child `Application` CRs for each workload (app-of-apps pattern).
-4. Each child app watches a directory under `workloads/` and syncs it.
+1. The bootstrap `root` Application (created out-of-band by `platform-lab/make argocd`) watches `apps/`.
+2. Every file in `apps/` becomes an Argo Application via the app-of-apps pattern.
+3. Each child Application syncs its `workloads/<name>/` directory.
+4. All apps use `automated: { prune: true, selfHeal: true }` and `ServerSideApply=true`.
 
-## Sync policy
+## Local hostnames
 
-All apps use:
-- **automated sync** with `prune: true` and `selfHeal: true`
-- **3-minute reconciliation interval** (Argo CD default polling)
-- **CreateNamespace=true** sync option
+| Host                             | Ingress in                       |
+|----------------------------------|----------------------------------|
+| `argocd.platform-lab.test`       | argocd namespace (manual)        |
+| `grafana.platform-lab.test`      | workloads/observability-ingress  |
+| `chat.platform-lab.test`         | workloads/open-webui             |
+| `inference.platform-lab.test`    | workloads/inference-gateway      |
+| `platform-api.platform-lab.test` | workloads/platform-api           |
 
-To force an immediate sync: `argocd app sync <app-name>` or click "Sync" in the UI.
+## Tags
 
-## Adding a new workload
-
-1. Create `workloads/<name>/` with K8s manifests
-2. Create `apps/<name>.yaml` (an Argo CD Application CR pointing at `workloads/<name>`)
-3. Commit and push to `main`
-4. Root app picks it up within 3 min, creates the child app, syncs the workload
-
-## Related
-
-- Cluster + Argo CD provisioning: https://github.com/amekala2514/platform-lab
-- v0.2 design plan: see `PLATFORM_LAB_V0.2_PLAN.md` in main repo
+- `v0.2.0` — Phase C: inference gateway + Open WebUI + LLM dashboard
+- `v0.1.0` — Phase B: platform-api + observability
