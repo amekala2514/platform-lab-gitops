@@ -11,8 +11,6 @@ spec:
     repoURL: https://github.com/amekala2514/platform-lab-gitops.git
     targetRevision: main
     path: workloads/inference
-    directory:
-      recurse: false
   destination:
     server: https://kubernetes.default.svc
     # Each manifest sets its own metadata.namespace, so the app's destination
