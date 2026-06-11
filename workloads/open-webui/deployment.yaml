@@ -46,14 +46,35 @@ spec:
               value: "platform-lab-local-only-change-me"
             - name: DATA_DIR
               value: "/app/backend/data"
+            - name: RAG_EMBEDDING_ENGINE
+              value: "openai"
+            - name: RAG_OPENAI_API_BASE_URL
+              value: "http://inference-gateway.inference:8080/v1"
+            - name: RAG_OPENAI_API_KEY
+              value: "sk-platform-lab-noop"
+            - name: RAG_EMBEDDING_MODEL
+              value: "nomic-embed-text:latest"
+            - name: AUDIO_STT_ENGINE
+              value: ""
+            - name: AUDIO_TTS_ENGINE
+              value: ""
+            - name: ENABLE_IMAGE_GENERATION
+              value: "false"
           volumeMounts:
             - name: data
               mountPath: /app/backend/data
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30
           livenessProbe:
             httpGet:
               path: /health
               port: http
-            initialDelaySeconds: 60
             periodSeconds: 30
             timeoutSeconds: 5
             failureThreshold: 5
@@ -61,17 +82,16 @@ spec:
             httpGet:
               path: /health
               port: http
-            initialDelaySeconds: 20
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 6
           resources:
             requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              cpu: 500m
+              cpu: 200m
               memory: 1Gi
+            limits:
+              cpu: 1500m
+              memory: 3Gi
       volumes:
         - name: data
           persistentVolumeClaim:
