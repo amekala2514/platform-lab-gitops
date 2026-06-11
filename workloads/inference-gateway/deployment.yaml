@@ -26,7 +26,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: gateway
-          image: inference-gateway:831b762
+          image: inference-gateway:a7cf609
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
