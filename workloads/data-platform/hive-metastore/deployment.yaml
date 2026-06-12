@@ -74,6 +74,9 @@ spec:
             - name: config
               mountPath: /opt/hive/conf/metastore-site.xml
               subPath: metastore-site.xml
+            - name: config
+              mountPath: /opt/hadoop/etc/hadoop/core-site.xml
+              subPath: core-site.xml
       containers:
         - name: hive-metastore
           image: apache/hive:4.0.0
@@ -116,6 +119,9 @@ spec:
             - name: config
               mountPath: /opt/hive/conf/metastore-site.xml
               subPath: metastore-site.xml
+            - name: config
+              mountPath: /opt/hadoop/etc/hadoop/core-site.xml
+              subPath: core-site.xml
             - name: extra-libs
               mountPath: /extra-libs
       volumes:
