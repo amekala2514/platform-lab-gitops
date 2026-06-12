@@ -30,6 +30,7 @@ data:
     discovery.uri=http://localhost:8080
     query.max-memory=1GB
     query.max-memory-per-node=512MB
+    http-server.process-forwarded=true
   log.properties: |
     io.trino=INFO
   iceberg.properties: |
