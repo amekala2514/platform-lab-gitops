@@ -15,23 +15,30 @@ spec:
   sparkVersion: "3.5.3"
   restartPolicy:
     type: Never
+  deps:
+    packages:
+      - org.apache.hadoop:hadoop-aws:3.3.4
+      - com.amazonaws:aws-java-sdk-bundle:1.12.262
   sparkConf:
     "spark.eventLog.enabled": "true"
     "spark.eventLog.dir": "s3a://spark-history/"
+    "spark.hadoop.fs.s3a.impl": "org.apache.hadoop.fs.s3a.S3AFileSystem"
     "spark.hadoop.fs.s3a.endpoint": "http://minio.data-storage.svc.cluster.local:9000"
     "spark.hadoop.fs.s3a.path.style.access": "true"
+    "spark.hadoop.fs.s3a.connection.ssl.enabled": "false"
     "spark.hadoop.fs.s3a.access.key": "minioadmin"
     "spark.hadoop.fs.s3a.secret.key": "minioadmin123"
     "spark.hadoop.fs.s3a.aws.credentials.provider": "org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider"
+    "spark.jars.ivy": "/tmp/.ivy2"
   driver:
     cores: 1
-    memory: "512m"
+    memory: "768m"
     serviceAccount: spark
     labels:
       app.kubernetes.io/name: spark-pi
   executor:
     cores: 1
     instances: 1
-    memory: "512m"
+    memory: "768m"
     labels:
       app.kubernetes.io/name: spark-pi
