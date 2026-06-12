@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: spark-history
+  namespace: data-jobs
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: spark.platform-lab.test
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: spark-history
+                port:
+                  number: 80

@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: spark-history
+  namespace: data-jobs
+spec:
+  selector:
+    app.kubernetes.io/name: spark-history
+  ports:
+    - { name: http, port: 80, targetPort: 18080 }
