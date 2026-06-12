@@ -35,8 +35,9 @@ data:
     io.trino=INFO
   iceberg.properties: |
     connector.name=iceberg
-    iceberg.catalog.type=hadoop
-    iceberg.catalog.warehouse=s3a://lakehouse/warehouse
+    iceberg.catalog.type=rest
+    iceberg.rest-catalog.uri=http://iceberg-rest.data-storage.svc.cluster.local:8181
+    iceberg.rest-catalog.warehouse=s3://lakehouse/warehouse/
     fs.native-s3.enabled=true
     s3.endpoint=http://minio.data-storage.svc.cluster.local:9000
     s3.region=us-east-1

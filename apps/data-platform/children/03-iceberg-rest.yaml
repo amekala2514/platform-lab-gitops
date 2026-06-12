@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: data-platform-iceberg-rest
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/amekala2514/platform-lab-gitops.git
+    targetRevision: main
+    path: workloads/data-platform/iceberg-rest
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: data-storage
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false
