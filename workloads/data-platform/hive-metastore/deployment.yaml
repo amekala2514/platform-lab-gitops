@@ -40,19 +40,22 @@ spec:
               echo "Downloading Postgres JDBC driver..."
               curl -fsSL -o /extra-libs/postgresql.jar \
                 https://jdbc.postgresql.org/download/postgresql-42.7.4.jar
+              chmod 644 /extra-libs/postgresql.jar
               ls -la /extra-libs/
           volumeMounts:
             - name: extra-libs
               mountPath: /extra-libs
         - name: init-schema
           image: apache/hive:4.0.0
+          env:
+            - name: HIVE_AUX_JARS_PATH
+              value: /extra-libs
           command:
             - /bin/sh
             - -c
             - |
               set -e
-              cp /extra-libs/postgresql.jar /opt/hive/lib/postgresql.jar
-              echo "Checking if schema is already initialized..."
+              echo "Checking schema status..."
               if /opt/hive/bin/schematool -dbType postgres -info \
                    -userName hive -passWord hivepass \
                    -url jdbc:postgresql://hive-postgres:5432/metastore 2>&1 | grep -q "Metastore schema version"; then
@@ -73,12 +76,6 @@ spec:
       containers:
         - name: hive-metastore
           image: apache/hive:4.0.0
-          command:
-            - /bin/sh
-            - -c
-            - |
-              cp /extra-libs/postgresql.jar /opt/hive/lib/postgresql.jar
-              exec /entrypoint.sh
           env:
             - name: SERVICE_NAME
               value: metastore
@@ -86,6 +83,8 @@ spec:
               value: postgres
             - name: IS_RESUME
               value: "true"
+            - name: HIVE_AUX_JARS_PATH
+              value: /extra-libs
             - name: SERVICE_OPTS
               value: >-
                 -Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver
