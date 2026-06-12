@@ -38,19 +38,9 @@ spec:
             - |
               set -e
               cd /extra-libs
-
-              echo "[1/3] Downloading Postgres JDBC driver..."
+              echo "Downloading Postgres JDBC driver (only jar we actually need)..."
               curl -fsSL -o postgresql.jar \
                 https://jdbc.postgresql.org/download/postgresql-42.7.4.jar
-
-              echo "[2/3] Downloading hadoop-aws 3.3.6..."
-              curl -fsSL -o hadoop-aws-3.3.6.jar \
-                https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.6/hadoop-aws-3.3.6.jar
-
-              echo "[3/3] Downloading aws-java-sdk-bundle 1.12.367 (~287MB)..."
-              curl -fsSL -o aws-java-sdk-bundle-1.12.367.jar \
-                https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.367/aws-java-sdk-bundle-1.12.367.jar
-
               chmod 644 *.jar
               ls -lh /extra-libs/
           volumeMounts:
@@ -61,6 +51,8 @@ spec:
           env:
             - name: HIVE_AUX_JARS_PATH
               value: /extra-libs
+            - name: HADOOP_OPTIONAL_TOOLS
+              value: hadoop-aws
           command:
             - /bin/sh
             - -c
@@ -96,6 +88,8 @@ spec:
               value: "true"
             - name: HIVE_AUX_JARS_PATH
               value: /extra-libs
+            - name: HADOOP_OPTIONAL_TOOLS
+              value: hadoop-aws
             - name: SERVICE_OPTS
               value: >-
                 -Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver
