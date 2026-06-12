@@ -38,7 +38,7 @@ spec:
             - |
               set -e
               cd /extra-libs
-              echo "Downloading Postgres JDBC driver (only jar we actually need)..."
+              echo "Downloading Postgres JDBC driver..."
               curl -fsSL -o postgresql.jar \
                 https://jdbc.postgresql.org/download/postgresql-42.7.4.jar
               chmod 644 *.jar
@@ -49,10 +49,8 @@ spec:
         - name: init-schema
           image: apache/hive:4.0.0
           env:
-            - name: HIVE_AUX_JARS_PATH
-              value: /extra-libs
-            - name: HADOOP_OPTIONAL_TOOLS
-              value: hadoop-aws
+            - name: HADOOP_CLASSPATH
+              value: /extra-libs/postgresql.jar:/opt/hadoop/share/hadoop/tools/lib/*
           command:
             - /bin/sh
             - -c
@@ -86,10 +84,8 @@ spec:
               value: postgres
             - name: IS_RESUME
               value: "true"
-            - name: HIVE_AUX_JARS_PATH
-              value: /extra-libs
-            - name: HADOOP_OPTIONAL_TOOLS
-              value: hadoop-aws
+            - name: HADOOP_CLASSPATH
+              value: /extra-libs/postgresql.jar:/opt/hadoop/share/hadoop/tools/lib/*
             - name: SERVICE_OPTS
               value: >-
                 -Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver
