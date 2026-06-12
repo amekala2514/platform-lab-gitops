@@ -30,78 +30,12 @@ spec:
                 echo "Waiting for hive-postgres..."; sleep 3
               done
               echo "Postgres ready."
-        - name: fetch-jars
-          image: curlimages/curl:8.10.1
-          command:
-            - /bin/sh
-            - -c
-            - |
-              set -e
-              cd /extra-libs
-              echo "Downloading Postgres JDBC driver..."
-              curl -fsSL -o postgresql.jar \
-                https://jdbc.postgresql.org/download/postgresql-42.7.4.jar
-              chmod 644 *.jar
-              ls -lh /extra-libs/
-          volumeMounts:
-            - name: extra-libs
-              mountPath: /extra-libs
-        - name: init-schema
-          image: apache/hive:4.0.0
-          env:
-            - name: HADOOP_CLASSPATH
-              value: /extra-libs/postgresql.jar:/opt/hadoop/share/hadoop/tools/lib/*
-            - name: HADOOP_CONF_DIR
-              value: /opt/hadoop/etc/hadoop
-          command:
-            - /bin/sh
-            - -c
-            - |
-              set -e
-              echo "Checking schema status..."
-              if /opt/hive/bin/schematool -dbType postgres -info \
-                   -userName hive -passWord hivepass \
-                   -url jdbc:postgresql://hive-postgres:5432/metastore 2>&1 | grep -q "Metastore schema version"; then
-                echo "Schema already initialized, skipping."
-              else
-                echo "Initializing schema..."
-                /opt/hive/bin/schematool -dbType postgres -initSchema \
-                  -userName hive -passWord hivepass \
-                  -url jdbc:postgresql://hive-postgres:5432/metastore
-                echo "Schema initialized."
-              fi
-          volumeMounts:
-            - name: extra-libs
-              mountPath: /extra-libs
-            - name: config
-              mountPath: /opt/hive/conf/metastore-site.xml
-              subPath: metastore-site.xml
-            - name: config
-              mountPath: /opt/hive/conf/core-site.xml
-              subPath: core-site.xml
-            - name: config
-              mountPath: /opt/hadoop/etc/hadoop/core-site.xml
-              subPath: core-site.xml
       containers:
         - name: hive-metastore
-          image: apache/hive:4.0.0
+          image: bitsondatadev/hive-metastore:latest
           env:
-            - name: SERVICE_NAME
-              value: metastore
-            - name: DB_DRIVER
-              value: postgres
-            - name: IS_RESUME
-              value: "true"
-            - name: HADOOP_CLASSPATH
-              value: /extra-libs/postgresql.jar:/opt/hadoop/share/hadoop/tools/lib/*
-            - name: HADOOP_CONF_DIR
-              value: /opt/hadoop/etc/hadoop
-            - name: SERVICE_OPTS
-              value: >-
-                -Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver
-                -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://hive-postgres:5432/metastore
-                -Djavax.jdo.option.ConnectionUserName=hive
-                -Djavax.jdo.option.ConnectionPassword=hivepass
+            - name: METASTORE_DB_HOSTNAME
+              value: hive-postgres
           ports:
             - name: thrift
               containerPort: 9083
@@ -124,22 +58,12 @@ spec:
             periodSeconds: 20
           volumeMounts:
             - name: config
-              mountPath: /opt/hive/conf/metastore-site.xml
+              mountPath: /opt/apache-hive-metastore-3.0.0-bin/conf/metastore-site.xml
               subPath: metastore-site.xml
-            - name: config
-              mountPath: /opt/hive/conf/core-site.xml
-              subPath: core-site.xml
-            - name: config
-              mountPath: /opt/hadoop/etc/hadoop/core-site.xml
-              subPath: core-site.xml
-            - name: extra-libs
-              mountPath: /extra-libs
       volumes:
         - name: config
           configMap:
             name: hive-metastore-config
-        - name: extra-libs
-          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
