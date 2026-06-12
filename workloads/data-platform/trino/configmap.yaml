@@ -5,7 +5,7 @@ metadata:
   namespace: data-query
 data:
   node.properties: |
-    node.environment=platform-lab
+    node.environment=platform_lab
     node.data-dir=/data/trino
   jvm.config: |
     -server
