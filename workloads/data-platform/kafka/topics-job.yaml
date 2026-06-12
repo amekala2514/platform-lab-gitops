@@ -1,0 +1,31 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kafka-topics-init
+  namespace: data-streaming
+spec:
+  ttlSecondsAfterFinished: 600
+  backoffLimit: 10
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: create-topics
+          image: apache/kafka:3.8.0
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              BROKER=kafka.data-streaming.svc.cluster.local:9092
+              echo "Waiting for $BROKER..."
+              until /opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server $BROKER >/dev/null 2>&1; do
+                sleep 3
+              done
+              echo "Broker ready."
+              for TOPIC in raw-events trino-queries app-events; do
+                /opt/kafka/bin/kafka-topics.sh --bootstrap-server $BROKER \
+                  --create --if-not-exists --topic $TOPIC \
+                  --partitions 3 --replication-factor 1
+              done
+              /opt/kafka/bin/kafka-topics.sh --bootstrap-server $BROKER --list
