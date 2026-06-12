@@ -30,22 +30,68 @@ spec:
                 echo "Waiting for hive-postgres..."; sleep 3
               done
               echo "Postgres ready."
+        - name: fetch-jdbc-driver
+          image: curlimages/curl:8.10.1
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              echo "Downloading Postgres JDBC driver..."
+              curl -fsSL -o /extra-libs/postgresql.jar \
+                https://jdbc.postgresql.org/download/postgresql-42.7.4.jar
+              ls -la /extra-libs/
+          volumeMounts:
+            - name: extra-libs
+              mountPath: /extra-libs
+        - name: init-schema
+          image: apache/hive:4.0.0
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              cp /extra-libs/postgresql.jar /opt/hive/lib/postgresql.jar
+              echo "Checking if schema is already initialized..."
+              if /opt/hive/bin/schematool -dbType postgres -info \
+                   -userName hive -passWord hivepass \
+                   -url jdbc:postgresql://hive-postgres:5432/metastore 2>&1 | grep -q "Metastore schema version"; then
+                echo "Schema already initialized, skipping."
+              else
+                echo "Initializing schema..."
+                /opt/hive/bin/schematool -dbType postgres -initSchema \
+                  -userName hive -passWord hivepass \
+                  -url jdbc:postgresql://hive-postgres:5432/metastore
+                echo "Schema initialized."
+              fi
+          volumeMounts:
+            - name: extra-libs
+              mountPath: /extra-libs
+            - name: config
+              mountPath: /opt/hive/conf/metastore-site.xml
+              subPath: metastore-site.xml
       containers:
         - name: hive-metastore
           image: apache/hive:4.0.0
+          command:
+            - /bin/sh
+            - -c
+            - |
+              cp /extra-libs/postgresql.jar /opt/hive/lib/postgresql.jar
+              exec /entrypoint.sh
           env:
             - name: SERVICE_NAME
               value: metastore
             - name: DB_DRIVER
               value: postgres
+            - name: IS_RESUME
+              value: "true"
             - name: SERVICE_OPTS
               value: >-
                 -Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver
                 -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://hive-postgres:5432/metastore
                 -Djavax.jdo.option.ConnectionUserName=hive
                 -Djavax.jdo.option.ConnectionPassword=hivepass
-            - name: IS_RESUME
-              value: "true"
           ports:
             - name: thrift
               containerPort: 9083
@@ -70,10 +116,14 @@ spec:
             - name: config
               mountPath: /opt/hive/conf/metastore-site.xml
               subPath: metastore-site.xml
+            - name: extra-libs
+              mountPath: /extra-libs
       volumes:
         - name: config
           configMap:
             name: hive-metastore-config
+        - name: extra-libs
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
