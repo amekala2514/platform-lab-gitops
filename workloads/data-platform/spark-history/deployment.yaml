@@ -26,7 +26,7 @@ spec:
             - { name: AWS_REGION,            value: "us-east-1" }
             - name: SPARK_HISTORY_OPTS
               value: >-
-                -Dspark.history.fs.logDirectory=s3a://spark-history/
+                -Dspark.history.fs.logDirectory=s3a://spark-history/logs
                 -Dspark.history.ui.port=18080
                 -Dspark.hadoop.fs.s3a.endpoint=http://minio.data-storage.svc.cluster.local:9000
                 -Dspark.hadoop.fs.s3a.path.style.access=true

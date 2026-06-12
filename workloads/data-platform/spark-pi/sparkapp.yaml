@@ -21,7 +21,7 @@ spec:
       - com.amazonaws:aws-java-sdk-bundle:1.12.262
   sparkConf:
     "spark.eventLog.enabled": "true"
-    "spark.eventLog.dir": "s3a://spark-history/"
+    "spark.eventLog.dir": "s3a://spark-history/logs"
     "spark.hadoop.fs.s3a.impl": "org.apache.hadoop.fs.s3a.S3AFileSystem"
     "spark.hadoop.fs.s3a.endpoint": "http://minio.data-storage.svc.cluster.local:9000"
     "spark.hadoop.fs.s3a.path.style.access": "true"
