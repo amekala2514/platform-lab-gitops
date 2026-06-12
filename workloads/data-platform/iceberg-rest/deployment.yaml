@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: iceberg-rest
-          image: apache/iceberg-rest-fixture:1.6.1
+          image: apache/iceberg-rest-fixture:1.10.1
           ports:
             - name: http
               containerPort: 8181
