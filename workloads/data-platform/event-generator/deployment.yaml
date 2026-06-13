@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: event-generator
+  namespace: data-apps
+  labels:
+    app: event-generator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: event-generator
+  template:
+    metadata:
+      labels:
+        app: event-generator
+    spec:
+      containers:
+        - name: event-generator
+          image: ghcr.io/amekala2514/event-generator:v0.1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: KAFKA_BROKERS
+              value: kafka.data-streaming.svc.cluster.local:9092
+            - name: KAFKA_TOPIC
+              value: raw-events
+            - name: LISTEN_ADDR
+              value: ":8080"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]

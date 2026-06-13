@@ -29,3 +29,10 @@ metadata:
   labels:
     platform-lab.io/tier: data-platform
     platform-lab.io/component: jobs
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: data-apps
+  labels:
+    platform-lab.io/tier: apps
