@@ -15,6 +15,21 @@ spec:
       labels:
         app.kubernetes.io/name: spark-history
     spec:
+      initContainers:
+        - name: fetch-aws-jars
+          image: curlimages/curl:8.10.1
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              cd /extra-jars
+              curl -fsSL -o hadoop-aws-3.3.4.jar https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.4/hadoop-aws-3.3.4.jar
+              curl -fsSL -o aws-java-sdk-bundle-1.12.262.jar https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.262/aws-java-sdk-bundle-1.12.262.jar
+              ls -lh /extra-jars/
+          volumeMounts:
+            - name: extra-jars
+              mountPath: /extra-jars
       containers:
         - name: spark-history
           image: apache/spark:3.5.3
@@ -24,10 +39,12 @@ spec:
             - { name: AWS_ACCESS_KEY_ID,     value: "minioadmin" }
             - { name: AWS_SECRET_ACCESS_KEY, value: "minioadmin123" }
             - { name: AWS_REGION,            value: "us-east-1" }
+            - { name: SPARK_DAEMON_CLASSPATH, value: "/extra-jars/*" }
             - name: SPARK_HISTORY_OPTS
               value: >-
                 -Dspark.history.fs.logDirectory=s3a://spark-history/logs
                 -Dspark.history.ui.port=18080
+                -Dspark.hadoop.fs.s3a.impl=org.apache.hadoop.fs.s3a.S3AFileSystem
                 -Dspark.hadoop.fs.s3a.endpoint=http://minio.data-storage.svc.cluster.local:9000
                 -Dspark.hadoop.fs.s3a.path.style.access=true
                 -Dspark.hadoop.fs.s3a.connection.ssl.enabled=false
@@ -40,11 +57,18 @@ spec:
             - -c
             - |
               /opt/spark/sbin/start-history-server.sh
-              tail -f /opt/spark/logs/*.out
+              sleep 5
+              tail -F /opt/spark/logs/*.out
+          volumeMounts:
+            - name: extra-jars
+              mountPath: /extra-jars
           resources:
             requests: { cpu: 100m, memory: 384Mi }
             limits:   { cpu: 500m, memory: 768Mi }
           readinessProbe:
             httpGet: { path: /, port: 18080 }
-            initialDelaySeconds: 30
+            initialDelaySeconds: 40
             periodSeconds: 10
+      volumes:
+        - name: extra-jars
+          emptyDir: {}
