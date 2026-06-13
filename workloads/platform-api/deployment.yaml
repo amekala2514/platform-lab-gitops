@@ -5,7 +5,7 @@ metadata:
   namespace: default
   labels:
     app: platform-api
-    version: 0.1.0
+    version: 0.2.0
 spec:
   replicas: 2
   revisionHistoryLimit: 10
@@ -16,11 +16,11 @@ spec:
     metadata:
       labels:
         app: platform-api
-        version: 0.1.0
+        version: 0.2.0
     spec:
       containers:
         - name: platform-api
-          image: platform-api:dev
+          image: ghcr.io/amekala2514/platform-api:v0.2.0
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -29,6 +29,12 @@ spec:
           env:
             - name: PORT
               value: "8080"
+            - name: KAFKA_ENABLED
+              value: "true"
+            - name: KAFKA_BROKERS
+              value: kafka.data-streaming.svc.cluster.local:9092
+            - name: KAFKA_TOPIC
+              value: raw-events
           resources:
             requests:
               cpu: 50m
